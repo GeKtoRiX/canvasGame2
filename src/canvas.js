@@ -41,40 +41,38 @@ const keys = {
 };
 
 class Player {
-  constructor(x, y, width, height, color) {
-    this.posRect = {
-      x: x,
-      y: y,
+  constructor() {
+    this.position = {
+      x: 50,
+      y: htmlCanvas.height - 100,
     };
     this.velocity = {
       x: 0,
       y: 0,
     };
-    this.rect = {
-      width: width,
-      height: height,
-      color: color,
+    this.size = {
+      width: 30,
+      height: 30,
     };
+    this.color = `blue`;
   }
 
   draw() {
-    canvas.beginPath();
-    canvas.fillStyle = this.rect.color;
+    canvas.fillStyle = this.color;
     canvas.fillRect(
-      this.posRect.x,
-      this.posRect.y,
-      this.rect.width,
-      this.rect.height
+      this.position.x,
+      this.position.y,
+      this.size.width,
+      this.size.height
     );
     canvas.fill();
-    canvas.closePath();
   }
   update() {
     this.draw();
-    this.posRect.x += this.velocity.x;
-    this.posRect.y += this.velocity.y;
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
     if (
-      this.posRect.y + this.rect.height + this.velocity.y <
+      this.position.y + this.size.height + this.velocity.y <
       htmlCanvas.height
     ) {
       this.velocity.y += globalGravity;
@@ -83,47 +81,96 @@ class Player {
     }
   }
 }
-let player;
+class Platform {
+  constructor({x,y}) {
+    this.position = {
+      x: x,
+      y: y,
+    };
+    this.size = {
+      width: 200,
+      height: 20,
+    };
+    this.color = `red`;
+  }
+  draw() {
+    canvas.fillStyle = this.color;
+    canvas.fillRect(
+      this.position.x,
+      this.position.y,
+      this.size.width,
+      this.size.height
+    );
+  }
+}
+const player = new Player();
+const platforms = [new Platform({x: 200, y: htmlCanvas.height / 2 + 150}), new Platform({x: 200 * 3, y:htmlCanvas.height / 2})];
+
 function init() {
-  player = new Player(100, 100, 30, 30, "blue");
+  for (let i = 0; i < 3; i++) {
+    platforms.push(new Platform());
+  }
 }
 function animate() {
-  canvas.fillStyle = "rgba(0, 0, 0, 0.5)";
-  canvas.fillRect(0, 0, htmlCanvas.width, htmlCanvas.height);
-  player.update();
-  if (keys.right.pressed) {
-    player.velocity.x = 5;
-  }
-  else if(keys.left.pressed){
-    player.velocity.x = -5;  
-  }
-  else if(keys.top.pressed){
-     if(player.velocity.y === 0){
-        player.velocity.y = -15;
-     }
-  }
   requestAnimationFrame(animate);
+  canvas.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
+  player.update();
+  platforms.forEach((platform) => {
+    platform.draw();
+  });
+
+  if (keys.right.pressed && player.position.x < htmlCanvas.width / 2) {
+    player.velocity.x = 5;
+  } else if (keys.left.pressed && player.position.x > 100) {
+    player.velocity.x = -5;
+  } else {
+    player.velocity.x = 0;
+    if (keys.right.pressed) {
+      platforms.forEach((platform) => {
+        platform.position.x -= 5;
+      });
+    } else if (keys.left.pressed) {
+      platforms.forEach((platform) => {
+        platform.position.x += 5;
+      });
+    }
+  }
+  platforms.forEach((platform) => {
+    if (
+      // Сравнение высоты квадрата с поверхностью платформы.
+      player.position.y + player.size.height <= platform.position.y &&
+      // Сравнение высоты квадрата с поверхностью платформы с учетом ускорения.
+      player.position.y + player.size.height + player.velocity.y >=
+        platform.position.y &&
+      // Позиция сравнения правого края квадрата с левым краем платформы.
+      player.position.x + player.size.width >= platform.position.x &&
+      // Позиция сравнения левого края квадрата с правым краем платформы.
+      player.position.x <= platform.position.x + platform.size.width
+    ) {
+      player.velocity.y = 0;
+    }
+  });
 }
-init();
 animate();
 
 window.addEventListener("keydown", ({ code }) => {
   switch (code) {
     case "KeyA":
-      console.log("left");
+      console.log("leftDown");
       keys.left.pressed = true;
       break;
     case "KeyD":
-      console.log("right");
+      console.log("rightDown");
       keys.right.pressed = true;
       break;
     case "KeyW":
-      console.log("top");
-      keys.top.pressed = true;
+      console.log("topDown");
+      if (player.velocity.y === 0) {
+        player.velocity.y = -15;
+      }
       break;
     case "KeyS":
-      console.log("down");
-      keys.down.pressed = true;
+      console.log("downDown");
       break;
     default:
       console.log("unknown key");
@@ -134,24 +181,18 @@ window.addEventListener("keydown", ({ code }) => {
 window.addEventListener("keyup", ({ code }) => {
   switch (code) {
     case "KeyA":
-      console.log("left");
-      player.velocity.x = 0;
+      console.log("leftUp");
       keys.left.pressed = false;
       break;
     case "KeyD":
-      console.log("right");
-      player.velocity.x = 0;
+      console.log("rightUp");
       keys.right.pressed = false;
       break;
     case "KeyW":
-      console.log("top");
-      player.velocity.y = 0;
-      keys.top.pressed = false;
+      console.log("topUp");
       break;
     case "KeyS":
-      console.log("down");
-      player.velocity.y = 0;
-      keys.down.pressed = false;
+      console.log("downUp");
       break;
     default:
       console.log("unknown key");
