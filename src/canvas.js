@@ -1,4 +1,7 @@
 import style from "./main.css";
+import background from "./img/background.png";
+import hills from "./img/hills.png";
+import platform from "./img/platform.png";
 
 const htmlCanvas = document.getElementById("canvas");
 const canvas = htmlCanvas.getContext("2d");
@@ -23,8 +26,8 @@ var mouse = {
   x: htmlCanvas.width / 2,
   y: htmlCanvas.height / 2,
 };
-
 const globalGravity = 0.5;
+// Переключатели событий true false на кнопках awd.
 const keys = {
   right: {
     pressed: false,
@@ -44,7 +47,7 @@ class Player {
   constructor() {
     this.position = {
       x: 50,
-      y: htmlCanvas.height - 100,
+      y: center.y - 100,
     };
     this.velocity = {
       x: 0,
@@ -82,20 +85,20 @@ class Player {
   }
 }
 class Platform {
-  constructor({x,y}) {
+  constructor({ x, y, img }) {
     this.position = {
       x: x,
-      y: y,
+      y: y - Math.random() * 350,
     };
     this.size = {
-      width: 200,
-      height: 20,
+      width: Math.random() * 250 + 100,
+      height: 100,
     };
-    this.color = `red`;
+    this.img = img;
   }
   draw() {
-    canvas.fillStyle = this.color;
-    canvas.fillRect(
+    canvas.drawImage(
+      this.img,
       this.position.x,
       this.position.y,
       this.size.width,
@@ -103,35 +106,101 @@ class Platform {
     );
   }
 }
+class GenericObjects {
+  constructor({ x, y, img }) {
+    this.position = {
+      x: x,
+      y: y,
+    };
+    this.size = {
+      width: img.width,
+      height: img.height,
+    };
+    this.img = img;
+  }
+  draw() {
+    canvas.drawImage(
+      this.img,
+      this.position.x,
+      this.position.y,
+      this.size.width,
+      this.size.height
+    );
+  }
+}
+// HTML изображения.
+const imgBackground = new Image();
+imgBackground.src = background;
+const imgHills = new Image();
+imgHills.src = hills;
+const imgPlatform = new Image();
+imgPlatform.src = platform;
+// Игрок, Массив плфторм и статического окружения и подсчета очков прокрутки.
 const player = new Player();
-const platforms = [new Platform({x: 200, y: htmlCanvas.height / 2 + 150}), new Platform({x: 200 * 3, y:htmlCanvas.height / 2})];
-
+let platforms = [];
+let genericObjects = [];
+let scrollOffSet = 0;
+// Создание вводных данных игры.
 function init() {
-  for (let i = 0; i < 3; i++) {
-    platforms.push(new Platform());
+  const getObjHillsNum = 3;
+  let XGenObj = 0;
+  let YGenObj = htmlCanvas.height - imgHills.height + 10;
+  //
+  for (let i = 0; i < getObjHillsNum; i++) {
+    genericObjects.push(
+      new GenericObjects({ x: XGenObj, y: YGenObj, img: imgHills })
+    );
+    XGenObj += imgHills.width;
+  }
+  // Вводные данные для платформ.
+  const platformNum = 30;
+  let XPlatform = 0;
+  let YPlatform = htmlCanvas.height - 100;
+  // Добавление блоков платформы. 1-100/4.
+  for (let i = 0; i < platformNum; i++) {
+    if (i % 2 === 0 && i > 1) {
+      platforms.splice(i - 1, 1);
+    } else {
+      platforms.push(
+        new Platform({ x: XPlatform, y: YPlatform, img: imgPlatform })
+      );
+    }
+    XPlatform += 200;
   }
 }
 function animate() {
   requestAnimationFrame(animate);
   canvas.clearRect(0, 0, htmlCanvas.width, htmlCanvas.height);
-  player.update();
+  genericObjects.forEach((object) => {
+    object.draw();
+  });
   platforms.forEach((platform) => {
     platform.draw();
   });
+  player.update();
 
   if (keys.right.pressed && player.position.x < htmlCanvas.width / 2) {
     player.velocity.x = 5;
-  } else if (keys.left.pressed && player.position.x > 100) {
+  } else if (keys.left.pressed && player.position.x > 300) {
     player.velocity.x = -5;
   } else {
     player.velocity.x = 0;
+
     if (keys.right.pressed) {
+      scrollOffSet += 5;
       platforms.forEach((platform) => {
         platform.position.x -= 5;
       });
+      genericObjects.forEach((object) => {
+        object.position.x -= 3;
+      });
     } else if (keys.left.pressed) {
+      scrollOffSet -= 5;
       platforms.forEach((platform) => {
         platform.position.x += 5;
+      });
+      genericObjects.forEach((object) => {
+        object.position.x += 3;
       });
     }
   }
@@ -150,7 +219,11 @@ function animate() {
       player.velocity.y = 0;
     }
   });
+  if (scrollOffSet >= 4950) {
+    console.log("You win!");
+  }
 }
+init();
 animate();
 
 window.addEventListener("keydown", ({ code }) => {
