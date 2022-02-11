@@ -1,5 +1,4 @@
 import style from "./main.css";
-import background from "./img/background.png";
 import hills from "./img/hills.png";
 import platform from "./img/platform.png";
 import spriteStandRight from "./img/spriteStandRight.png";
@@ -18,15 +17,8 @@ window.addEventListener("resize", () => {
   htmlCanvas.height = window.innerHeight - 4;
   init();
 });
-window.addEventListener("mousemove", (event) => {
-  mouse.x = event.clientX;
-  mouse.y = event.clientY;
-});
+// Координаты центра холста.
 const center = {
-  x: htmlCanvas.width / 2,
-  y: htmlCanvas.height / 2,
-};
-var mouse = {
   x: htmlCanvas.width / 2,
   y: htmlCanvas.height / 2,
 };
@@ -57,36 +49,53 @@ class Player {
       y: 0,
     };
     this.size = {
-      width: 65,
+      width: 66,
       height: 150,
     };
     this.speed = 5;
-    this.img = standRight;
     this.frames = 0;
+    // Спрайты анимации персонажа.
     this.sprites = {
+      // Спрайты анимации ожидания.
       stand: {
+        // Анимация ожидания лицом вправо.
         right: standRight,
+        // Анимация ожидания лицом влево.
         left: standLeft,
+        // Стандартная ширина кадра ожидания.
         cropWidth: 177,
+        // Стандартная ширина элемента персонажа.
         width: 66,
       },
+      // Спрайты анимации бега.
       run: {
+        // Анимация бега лицом вправо.
         right: runRight,
+        // Анимация бега лицом влево.
         left: runLeft,
+        // Стандартная ширина кадра бега.
         cropWidth: 341,
+        // Стандартная ширина элемента персонажа.
         width: 127.875,
-      }
-    }
+      },
+    };
+    // Текущий спрайт отрисовки анимации.
     this.currentSptire = this.sprites.stand.right;
+    // Текущая ширина кадра.
     this.currentCropWidth = 177;
   }
 
   draw() {
     canvas.drawImage(
+      // Исходник html изображения анимации.
       this.currentSptire,
+      // Координата x метки начала обрезания фрейма анимации.
       this.currentCropWidth * this.frames,
+      // Координата y метки начала обрезания фрейма анимации.
       0,
+      // Координата x конца обрезания фрейма анимации.
       this.currentCropWidth,
+      // Координата y конца обрезания фрейма анимации.
       400,
       this.position.x,
       this.position.y,
@@ -95,17 +104,24 @@ class Player {
     );
   }
   update() {
+    // Переменная смещения метки отрезания фрейма спрайта на 1 за цикл.
     this.frames++;
     if (this.frames > 29 && this.currentSptire === this.sprites.run.right) {
       this.frames = 0;
-    }
-    else if (this.frames > 29 && this.currentSptire === this.sprites.run.left) {
+    } else if (
+      this.frames > 29 &&
+      this.currentSptire === this.sprites.run.left
+    ) {
       this.frames = 0;
-    }
-    else if (this.frames > 59 && this.currentSptire === this.sprites.stand.left) {
+    } else if (
+      this.frames > 59 &&
+      this.currentSptire === this.sprites.stand.left
+    ) {
       this.frames = 0;
-    }
-    else if (this.frames > 59 && this.currentSptire === this.sprites.stand.right) {
+    } else if (
+      this.frames > 59 &&
+      this.currentSptire === this.sprites.stand.right
+    ) {
       this.frames = 0;
     }
     this.draw();
@@ -117,7 +133,7 @@ class Player {
     ) {
       this.velocity.y += globalGravity;
     } else {
-      // this.velocity.y = 0;
+      // for testing.
     }
   }
 }
@@ -165,7 +181,7 @@ class GenericObjects {
     );
   }
 }
-// HTML изображения.
+// HTML спрайты анимации движения.
 const standRight = new Image();
 standRight.src = spriteStandRight;
 const standLeft = new Image();
@@ -174,14 +190,12 @@ const runRight = new Image();
 runRight.src = spriteRunRight;
 const runLeft = new Image();
 runLeft.src = spriteRunLeft;
-
-const imgBackground = new Image();
-imgBackground.src = background;
+// HTML изображения платформ и изображения параллакса.
 const imgHills = new Image();
 imgHills.src = hills;
 const imgPlatform = new Image();
 imgPlatform.src = platform;
-// Игрок, Массив плфторм и статического окружения и подсчета очков прокрутки.
+// Игрок, массив плфторм и статического окружения, подсчет очков прокрутки.
 const player = new Player();
 let platforms = [];
 let genericObjects = [];
@@ -202,7 +216,7 @@ function init() {
   const platformNum = 30;
   let XPlatform = 0;
   let YPlatform = htmlCanvas.height - 100;
-  // Добавление блоков платформы. 1-100/4.
+  // Добавление блоков платформы.
   for (let i = 0; i < platformNum; i++) {
     if (i % 2 === 0 && i > 1) {
       platforms.splice(i - 1, 1);
@@ -234,25 +248,29 @@ function animate() {
     player.velocity.x = -player.speed;
   } else {
     player.velocity.x = 0;
+    // Движение платформ вправо.
     if (keys.right.pressed) {
       platforms.forEach((platform) => {
         platform.position.x -= player.speed;
       });
+      // Движение элементов параллакса вправо.
       genericObjects.forEach((object) => {
         object.position.x -= player.speed * 0.66;
       });
+      // Кол-во очков прохождения.
       scrollOffSet += 5;
+      // Движение платформ влево.
     } else if (keys.left.pressed) {
       scrollOffSet -= player.speed;
       platforms.forEach((platform) => {
         platform.position.x += player.speed;
       });
+      // Движение элементов параллакса влево.
       genericObjects.forEach((object) => {
         object.position.x += player.speed * 0.66;
       });
       scrollOffSet -= 5;
     }
-    // console.log(scrollOffSet);
   }
   // Определение коллизий.
   platforms.forEach((platform) => {
@@ -261,7 +279,7 @@ function animate() {
       player.position.y + player.size.height <= platform.position.y &&
       // Сравнение высоты квадрата с поверхностью платформы с учетом ускорения.
       player.position.y + player.size.height + player.velocity.y >=
-      platform.position.y &&
+        platform.position.y &&
       // Позиция сравнения правого края квадрата с левым краем платформы.
       player.position.x + player.size.width >= platform.position.x &&
       // Позиция сравнения левого края квадрата с правым краем платформы.
@@ -289,30 +307,25 @@ init();
 window.addEventListener("keydown", ({ code }) => {
   switch (code) {
     case "KeyA":
-      console.log("leftDown");
       keys.left.pressed = true;
       player.currentSptire = player.sprites.run.left;
       player.currentCropWidth = player.sprites.run.cropWidth;
       player.size.width = player.sprites.run.width;
       break;
     case "KeyD":
-      console.log("rightDown");
       keys.right.pressed = true;
       player.currentSptire = player.sprites.run.right;
       player.currentCropWidth = player.sprites.run.cropWidth;
       player.size.width = player.sprites.run.width;
       break;
     case "KeyW":
-      console.log("topDown");
       if (player.velocity.y === 0) {
         player.velocity.y = -15;
       }
       break;
     case "KeyS":
-      console.log("downDown");
       break;
     default:
-      console.log("unknown key");
       break;
   }
 });
@@ -320,27 +333,22 @@ window.addEventListener("keydown", ({ code }) => {
 window.addEventListener("keyup", ({ code }) => {
   switch (code) {
     case "KeyA":
-      console.log("leftUp");
       keys.left.pressed = false;
       player.currentSptire = player.sprites.stand.left;
       player.currentCropWidth = player.sprites.stand.cropWidth;
       player.size.width = player.sprites.stand.width;
       break;
     case "KeyD":
-      console.log("rightUp");
       keys.right.pressed = false;
       player.currentSptire = player.sprites.stand.right;
       player.currentCropWidth = player.sprites.stand.cropWidth;
       player.size.width = player.sprites.stand.width;
       break;
     case "KeyW":
-      console.log("topUp");
       break;
     case "KeyS":
-      console.log("downUp");
       break;
     default:
-      console.log("unknown key");
       break;
   }
 });
